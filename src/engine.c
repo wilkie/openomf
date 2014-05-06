@@ -152,6 +152,12 @@ void engine_run(int net_mode) {
         while(SDL_PollEvent(&e)) {
             // Handle other events
             switch(e.type) {
+                case SDL_CONTROLLERBUTTONDOWN:
+                    DEBUG("GameController BUTTON DOWN");
+                    break;
+                case SDL_CONTROLLERBUTTONUP:
+                    DEBUG("GameController BUTTON UP");
+                    break;
                 case SDL_QUIT:
                     run = 0;
                     break;
