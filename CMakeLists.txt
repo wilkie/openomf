@@ -44,8 +44,37 @@ if(GIT_FOUND)
     add_definitions(-DSHA1_HASH="${SHA1_HASH}")
 endif()
 
+IF(EMSCRIPTEN)
+  execute_process(
+    COMMAND "em-config" "EMSCRIPTEN_ROOT"
+    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+    OUTPUT_VARIABLE EMSCRIPTEN_ROOT
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+  )
+
+  set(USE_SUBMODULES 0)
+
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -s USE_SDL=2 -s USE_LIBPNG=1 -s USE_ZLIB=1 -s USE_OGG=1 -s USE_VORBIS=1")
+
+  set(CMAKE_INCLUDE_PATH "${EMSCRIPTEN_ROOT}/system/include/libc:${EMSCRIPTEN_ROOT}/system/include")
+  set(CMAKE_LIBRARY_PATH "${EMSCRIPTEN_ROOT}/system/lib")
+
+  set(LIBINTL_INCLUDE_DIR "${EMSCRIPTEN_ROOT}/system/include/lib/libintl.h")
+
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/libsdl")
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/libsdl/openomfproject")
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/libsdl/openomfproject/OpenOMF")
+  file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/libsdl/openomfproject/OpenOMF/.foo" "")
+
+  configure_file("packaging/emscripten/openomf.html" "openomf.html" COPYONLY)
+
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} --preload-file ../resources@/resources --preload-file ./libsdl@/libsdl -s TOTAL_MEMORY=67108864 -s ALLOW_MEMORY_GROWTH=1 -s ASSERTIONS=2")
+ENDIF()
+
 # System packages (hard dependencies)
+IF(NOT EMSCRIPTEN)
 find_package(SDL2)
+ENDIF()
 find_package(enet)
 find_package(confuse)
 find_package(argtable2)
@@ -106,11 +135,15 @@ ENDIF()
 
 # Audio sink selection
 IF(USE_OPENAL)
-    find_package(OpenAL)
+    # These are built-ins for Emscripten
+    IF(NOT EMSCRIPTEN)
+      find_package(OpenAL)
+    ENDIF()
     add_definitions(-DUSE_OPENAL)
 ELSE()
     MESSAGE(STATUS "Note! No audio sink selected; Music/sounds will not play.")
 ENDIF()
+add_definitions(-DUSE_OPENAL)
 
 # When building with MingW, do not look for Libintl
 # Also, use static libgcc when on mingw
@@ -124,15 +157,21 @@ ENDIF()
 
 # If we want to build support for vorbis streaming, find these too
 IF(USE_OGGVORBIS)
-    find_package(ogg)
-    find_package(vorbis)
+    # These are built-ins for Emscripten
+    IF(NOT EMSCRIPTEN)
+      find_package(ogg)
+      find_package(vorbis)
+    ENDIF()
     add_definitions(-DUSE_OGGVORBIS)
 ENDIF()
 
 # Find PNG if it is switched on
 IF(USE_PNG)
-    find_package(PNG)
-    find_package(ZLIB)
+    # These are built-ins for Emscripten
+    IF(NOT EMSCRIPTEN)
+      find_package(PNG)
+      find_package(ZLIB)
+    ENDIF()
     add_definitions(-DUSE_PNG)
 ENDIF()
 
@@ -419,3 +458,6 @@ INSTALL(FILES resources/openomf.bk resources/openomf_icon.png
     DESTINATION share/games/openomf/
     COMPONENT Data
 )
+
+IF(EMSCRIPTEN)
+ENDIF()

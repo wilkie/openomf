@@ -184,6 +184,7 @@ int main(int argc, char *argv[]) {
     INFO("Running on platform: %s", SDL_GetPlatform());
 
 #ifndef STANDALONE_SERVER
+#ifndef EMSCRIPTEN
     if(SDL_InitSubSystem(SDL_INIT_JOYSTICK|SDL_INIT_GAMECONTROLLER|SDL_INIT_HAPTIC)) {
         err_msgbox("SDL2 Initialization failed: %s", SDL_GetError());
         goto exit_2;
@@ -225,6 +226,7 @@ int main(int argc, char *argv[]) {
             SDL_JoystickClose(joy);
         }
     }
+#endif EMSCRIPTEN
 
     // Init libDumb
 #ifdef USE_DUMB
